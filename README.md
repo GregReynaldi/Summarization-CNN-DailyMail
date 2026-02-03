@@ -1,7 +1,5 @@
 # Summarization-CNN-DailyMail
 
-![Text Summarization](https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20text%20summarization%20application%20interface%20with%20blue%20color%20scheme%20and%20modern%20design&image_size=landscape_16_9)
-
 ## Project Overview
 
 A professional-grade AI-powered text summarization application specifically designed for CNN DailyMail articles. This project combines advanced extractive and abstractive summarization techniques to provide high-quality summaries with an intuitive, modern user interface.
