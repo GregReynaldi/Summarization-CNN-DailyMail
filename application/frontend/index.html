@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarization | CNN DailyMail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Color Palette */
+            --primary-color: #1a56db;
+            --primary-light: #4f46e5;
+            --primary-dark: #1e40af;
+            --secondary-color: #0ea5e9;
+            --accent-color: #f59e0b;
+            --background-color: #f9fafb;
+            --card-background: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-light: #9ca3af;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            /* Border Radius */
+            --border-radius-sm: 0.25rem;
+            --border-radius-md: 0.375rem;
+            --border-radius-lg: 0.5rem;
+            --border-radius-xl: 0.75rem;
+            --border-radius-2xl: 1rem;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --spacing-3xl: 4rem;
+            
+            /* Transitions */
+            --transition-fast: 0.15s ease-in-out;
+            --transition-normal: 0.25s ease-in-out;
+            --transition-slow: 0.35s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+            padding: var(--spacing-3xl) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            color: white;
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 L0,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: cover;
+            z-index: 1;
+        }
+
+        header .content {
+            position: relative;
+            z-index: 2;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        header .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-xl);
+            gap: var(--spacing-md);
+        }
+
+        header .logo svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-2xl);
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-2xl);
+            transition: all var(--transition-normal);
+            border: 1px solid var(--border-color);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xl);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card h2 .icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(26, 86, 219, 0.1);
+            border-radius: var(--border-radius-lg);
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: var(--spacing-lg);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            font-family: inherit;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all var(--transition-fast);
+            background-color: #f9fafb;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+            background-color: white;
+        }
+
+        .form-group textarea::placeholder {
+            color: var(--text-light);
+        }
+
+        /* Type Selector */
+        .type-selector {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+            background-color: #f3f4f6;
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius-lg);
+        }
+
+        .type-option {
+            flex: 1;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-md);
+            background-color: transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .type-option:hover {
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--text-primary);
+        }
+
+        .type-option.active {
+            background-color: white;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Buttons */
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-md) var(--spacing-2xl);
+            border: none;
+            border-radius: var(--border-radius-lg);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+            gap: var(--spacing-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 160px;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .button-primary:active {
+            transform: translateY(0);
+        }
+
+        .button-primary:disabled {
+            background-color: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Summary Result */
+        .summary-result {
+            min-height: 300px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            background-color: #f9fafb;
+            position: relative;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .summary-result.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-style: italic;
+            border-style: dashed;
+        }
+
+        .summary-result.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(26, 86, 219, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Metrics */
+        .metrics {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: var(--spacing-md);
+            background-color: #f9fafb;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.125rem;
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+            color: var(--error-color);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .error-message .icon {
+            font-size: 1.25rem;
+            margin-top: 1px;
+        }
+
+        /* Character Count */
+        .character-count {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-sm);
+            font-weight: 500;
+        }
+
+        .character-count.warning {
+            color: var(--warning-color);
+        }
+
+        .character-count.error {
+            color: var(--error-color);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: var(--spacing-3xl);
+            text-align: center;
+            padding: var(--spacing-2xl) 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer .branding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .footer .branding h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .footer .branding .logo {
+            width: 24px;
+            height: 24px;
+            color: var(--primary-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 767px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+
+            header {
+                padding: var(--spacing-2xl) var(--spacing-md);
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: var(--spacing-xl);
+            }
+
+            .card h2 {
+                font-size: 1.5rem;
+            }
+
+            .form-group textarea {
+                min-height: 250px;
+            }
+
+            .summary-result {
+                min-height: 250px;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn var(--transition-normal) ease-out;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--text-primary);
+            color: #fff;
+            text-align: center;
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+            font-size: 0.75rem;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="content">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022-2.113 1.056a.75.75 0 01-.767-1.242l.042-.021.71-.284-1.889-3.854a.75.75 0 011.243-.85l2.113 1.056z" clip-rule="evenodd" />
+                    </svg>
+                    <h1>Text Summarization</h1>
+                </div>
+                <p>Professional-grade summarization for CNN DailyMail articles using advanced AI techniques</p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="card fade-in">
+                <h2>
+                    <span class="icon">📝</span>
+                    Input Text
+                </h2>
+                <form id="summarize-form">
+                    <div class="form-group">
+                        <label for="input-text">Enter text to summarize (max 2048 characters)</label>
+                        <textarea 
+                            id="input-text" 
+                            placeholder="Paste your CNN DailyMail article text here..."
+                            maxlength="2048"
+                        ></textarea>
+                        <div id="character-count" class="character-count">0/2048</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Summarization Type</label>
+                        <div class="type-selector">
+                            <button 
+                                type="button" 
+                                class="type-option active" 
+                                data-type="extractive"
+                            >
+                                Extractive
+                            </button>
+                            <button 
+                                type="button" 
+                                class="type-option" 
+                                data-type="abstractive"
+                            >
+                                Abstractive
+                            </button>
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        class="button button-primary" 
+                        id="summarize-button"
+                    >
+                        <span>Generate Summary</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m5 12 5 5L20 7"/>
+                        </svg>
+                    </button>
+                </form>
+                <div id="error-message" class="error-message" style="display: none;">
+                    <span class="icon">⚠️</span>
+                    <span id="error-text"></span>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <h2>
+                    <span class="icon">📋</span>
+                    Summary Result
+                </h2>
+                <div id="summary-result" class="summary-result empty">
+                    Summary will appear here after processing
+                </div>
+                <div id="metrics" class="metrics" style="display: none;">
+                    <div class="metric-item">
+                        <div class="metric-label">Processing Time</div>
+                        <div class="metric-value" id="processing-time">0s</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Input Length</div>
+                        <div class="metric-value" id="input-length">0</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Output Length</div>
+                        <div class="metric-value" id="output-length">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="branding">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>Text Summarization | CNN DailyMail</h3>
+            </div>
+            <p>© 2026 Professional AI Summarization Tool | All rights reserved</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('summarize-form');
+            const inputText = document.getElementById('input-text');
+            const characterCount = document.getElementById('character-count');
+            const typeOptions = document.querySelectorAll('.type-option');
+            const summarizeButton = document.getElementById('summarize-button');
+            const summaryResult = document.getElementById('summary-result');
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            const metrics = document.getElementById('metrics');
+            const processingTime = document.getElementById('processing-time');
+            const inputLength = document.getElementById('input-length');
+            const outputLength = document.getElementById('output-length');
+
+            let selectedType = 'extractive';
+
+            // Character count update
+            inputText.addEventListener('input', function() {
+                const count = this.value.length;
+                characterCount.textContent = `${count}/2048`;
+
+                // Update count color based on length
+                if (count > 1800) {
+                    characterCount.className = 'character-count error';
+                } else if (count > 1500) {
+                    characterCount.className = 'character-count warning';
+                } else {
+                    characterCount.className = 'character-count';
+                }
+            });
+
+            // Type selector
+            typeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    typeOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedType = this.dataset.type;
+                });
+            });
+
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const text = inputText.value.trim();
+                
+                if (!text) {
+                    showError('Please enter text to summarize');
+                    return;
+                }
+
+                // Clear previous results and errors
+                hideError();
+                showLoading();
+                metrics.style.display = 'none';
+
+                // Disable button during processing
+                summarizeButton.disabled = true;
+                summarizeButton.innerHTML = '<div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div><span>Processing...</span>';
+
+                // Send request to backend
+                fetch('http://localhost:8000/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        type: selectedType
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Server error. Please try again.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displaySummary(data);
+                })
+                .catch(error => {
+                    showError(error.message);
+                    showEmptyState();
+                })
+                .finally(() => {
+                    // Re-enable button
+                    summarizeButton.disabled = false;
+                    summarizeButton.innerHTML = '<span>Generate Summary</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>';
+                });
+            });
+
+            // Show loading state
+            function showLoading() {
+                summaryResult.className = 'summary-result loading';
+                summaryResult.innerHTML = '<div class="spinner"></div>';
+            }
+
+            // Show empty state
+            function showEmptyState() {
+                summaryResult.className = 'summary-result empty';
+                summaryResult.textContent = 'Summary will appear here after processing';
+            }
+
+            // Display summary
+            function displaySummary(data) {
+                summaryResult.className = 'summary-result';
+                summaryResult.textContent = data.summary;
+                
+                // Update metrics
+                processingTime.textContent = `${data.processing_time.toFixed(2)}s`;
+                inputLength.textContent = data.input_length;
+                outputLength.textContent = data.output_length;
+                metrics.style.display = 'grid';
+            }
+
+            // Show error message
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.style.display = 'flex';
+            }
+
+            // Hide error message
+            function hideError() {
+                errorMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

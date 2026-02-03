@@ -1,0 +1,23 @@
+# Python Dependencies for Text Summarization CNN DailyMail Project
+
+# Web Framework
+fastapi==0.104.1
+uvicorn==0.24.0.post1
+
+# Machine Learning & NLP
+sentence-transformers==2.2.2  # For extractive summarization
+scikit-learn==1.3.2           # For KMeans clustering in extractive summarization
+transformers==4.35.2          # For abstractive summarization model
+peft==0.7.0                   # For LoRA adapter support
+nltk==3.8.1                   # For sentence tokenization
+
+# Core Libraries
+numpy==1.24.4                 # For numerical operations
+pandas==2.0.3                 # For data handling
+torch==2.1.0                  # PyTorch for model inference
+
+# Additional Dependencies
+python-multipart==0.0.6       # For form data handling
+
+# Note: This file contains all required dependencies for the project.
+# Run 'pip install -r requirements.txt' to install all dependencies.
